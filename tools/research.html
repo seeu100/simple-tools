@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head> 
+  <title>植物分类导航与工具</title> 
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width"> <!-- 设置视图端口，使页面在移动设备上适配 -->
+  <link rel="stylesheet" type="text/css" href="style.css"> <!-- 引入外部样式文件 -->
+</head>
+
+<body style="text-align: center;">
+  <h1>学术搜索工具</h1>
+  <form id="searchForm"> <input type="text" id="searchQuery" placeholder="输入搜索关键词"> 
+    <select id="engineSelect">
+      <option value="google-scholar">谷歌学术</option>
+      <option value="bing-academic">Bing学术</option>
+      <option value="cnki">cnki</option>
+      <option value="wechat">微信搜索</option>
+      <option value="zhihu">知乎搜索</option>
+      <option value="weibo">微博搜索</option>
+      <option value="all">全部搜索引擎</option>
+    </select> <button type="submit">网络搜索</button> </form>
+    
+  <script>    document.getElementById('searchForm').addEventListener('submit', function (event) { event.preventDefault(); var query = document.getElementById('searchQuery').value; var engine = document.getElementById('engineSelect').value; if (query.trim() === '') { alert('请输入搜索关键词'); return; } switch (engine) { 
+  case 'google-scholar': window.open('https://scholar.google.com/scholar?q=' + encodeURIComponent(query)); break; 
+  case 'bing-academic': window.open('https://www.bing.com/academic/search?q=' + encodeURIComponent(query)); break; 
+  case 'cnki': window.open('https://kns.cnki.net/kns8s/defaultresult/index?kw=' + encodeURIComponent(query)); break; 
+  case 'wechat': window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query)); break; 
+  case 'zhihu': window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query)); break; 
+  case 'weibo': window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break; 
+  case 'all': 
+    window.open('https://scholar.google.com/scholar?q=' + encodeURIComponent(query)); 
+    window.open('https://www.bing.com/academic/search?q=' + encodeURIComponent(query)); 
+    window.open('https://kns.cnki.net/kns8s/defaultresult/index?kw=' + encodeURIComponent(query)); 
+    window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query)); 
+    window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query)); 
+    window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break; 
+  default: alert('请选择一个搜索引擎'); } });  </script>
+  <!-- 定义一级标题 -->
+  <h1>常用网站</h1>
+  <ul
+    style="list-style-type: none;         display: flex;         justify-content: center;         align-items: center;         padding: 0;">
+
+    <li style="margin: 5px;"> <a href="https://www.cnki.net/" target="_blank"> <img
+      src="https://www.cnki.net/favicon.ico" width="25" height="25"
+      class="logo">中国知网</a> </li>
+      <li style="margin: 5px;"> <a href="hhttps://www.shflora.com/" target="_blank"> <img
+        src="../asset/tag-alt.svg" width="25" height="25"
+        class="logo">科研小助手</a> </li>
+      </ul>
+        <h2>Sci-Hub</h2>
+        <ul
+        style="list-style-type: none;           justify-content: center;         align-items: center;         padding: 0;">
+        <li><a href="https://sci-hub.mk/" target="_blank">https://sci-hub.mk/</a></li>
+        <li><a href="https://sci-hub.se/" target="_blank">https://sci-hub.se/</a></li>
+        <li><a href="https://sci-hub.st/" target="_blank">https://sci-hub.st/</a></li>
+        <li><a href="https://sci-hub.ren/" target="_blank">https://sci-hub.ren/</a></li>
+</ul>
+<h2>Library Genesis</h2>
+<ul
+style="list-style-type: none;           justify-content: center;         align-items: center;         padding: 0;">
+<li><a href="https://libgen.rs/" target="_blank">https://libgen.rs/</a></li>
+<li><a href="https://libgen.is/" target="_blank">https://libgen.is/</a></li>
+<li><a href="https://libgen.st/" target="_blank">https://libgen.st/</a></li>
+
+</ul>
+  <script type="text/javascript" src="script.js"></script>
+</body>
+
+</html><!-- 引入外部脚本文件 -->
+<script type="text/javascript" src="script.js"></script>
+</body>
+
+</html>

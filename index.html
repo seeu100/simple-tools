@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>简洁导航与工具</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width"> <!-- 设置视图端口，使页面在移动设备上适配 -->
+  <link rel="stylesheet" type="text/css" href="style.css"> <!-- 引入外部样式文件 -->
+</head>
+
+<body style="text-align: center;">
+  <h1>多引擎搜索工具</h1>
+  <form id="searchForm"> <input type="text" id="searchQuery" placeholder="输入搜索关键词">
+    <select id="engineSelect">
+      <option value="bing">Bing</option>
+      <option value="wechat">微信搜索</option>
+      <option value="zhihu">知乎搜索</option>
+      <option value="weibo">微博搜索</option>
+      <option value="all">全部搜索引擎</option>
+    </select> <button type="submit">搜索</button>
+  </form>
+
+  <script>    document.getElementById('searchForm').addEventListener('submit', function (event) {
+      event.preventDefault(); var query = document.getElementById('searchQuery').value; var engine = document.getElementById('engineSelect').value; if (query.trim() === '') { alert('请输入搜索关键词'); return; } switch (engine) {
+        case 'bing': window.open('https://www.bing.com/search?q=' + encodeURIComponent(query)); break;
+        case 'wechat': window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query)); break;
+        case 'zhihu': window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query)); break;
+        case 'weibo': window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break;
+        case 'all':
+          window.open('https://www.bing.com/search?q=' + encodeURIComponent(query));
+          window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query));
+          window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query));
+          window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break;
+        default: alert('请选择一个搜索引擎');
+      }
+    });  </script>
+  <!-- 定义一级标题 -->
+  <h1>常用网站</h1>
+
+  <ul
+    style="list-style-type: none;         display: flex;         justify-content: center;         align-items: center;         padding: 0;">
+    <li style="margin: 5px;"> <a href="https://tongyi.aliyun.com/qianwen/" target="_blank"> <img
+          src="https://img.alicdn.com/imgextra/i3/O1CN01sffRIx1nb3dXCKdFC_!!6000000005107-2-tps-1024-1024.png"
+          width="25" height="25" class="logo">通义</a> </li>
+    <li style="margin: 5px;"> <a href="https://chatglm.cn/main/alltoolsdetail" target="_blank"> <img
+          src="https://chatglm.cn/img/icons/apple-touch-icon-152x152.png" width="25" height="25" class="logo">智谱清言</a>
+    </li>
+    <li style="margin: 5px;"> <a href="https://web.baimiaoapp.com/" target="_blank"> <img src="https://xlimage.uzero.cn/shinescan/res/favicon.ico"
+          width="25" height="25" class="logo">白描OCR</a> </li>
+  </ul>
+  <h1>实用工具</h1>
+  </nav> <a href="tools/cloze.html"> <button>Anki填空制卡工具</button> </a>
+  </nav> <a href="tools/research.html"> <button>学术搜索与导航</button> </a>
+  </nav> <a href="tools/plant-search.html"> <button>植物搜索与导航</button> </a>
+  <!-- 引入外部脚本文件 -->
+  <script type="text/javascript" src="script.js"></script>
+</body>
+
+</html><!-- 引入外部脚本文件 -->
+<script type="text/javascript" src="script.js"></script>
+</body>
+
+</html>

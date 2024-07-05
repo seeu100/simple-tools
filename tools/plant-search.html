@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head> 
+  <title>植物分类导航与工具</title> 
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width"> <!-- 设置视图端口，使页面在移动设备上适配 -->
+  <link rel="stylesheet" type="text/css" href="style.css"> <!-- 引入外部样式文件 -->
+</head>
+
+<body style="text-align: center;">
+  <h1>多引擎搜索工具</h1>
+  <form id="searchForm"> <input type="text" id="searchQuery" placeholder="输入搜索关键词"> 
+    <select id="engineSelect">
+      <option value="iplant">iplant</option>
+      <option value="iflora-name">iFlora植物志</option>
+      <option value="iflora">iflora</option>
+      <option value="cvh">CVH</option>
+      <option value="jstor">jstor</option>
+      <option value="cubg">CUBG</option>
+      <option value="ipni">IPNI</option>
+      <option value="powo">POWO</option>
+      <option value="ppbc">PPBC</option>
+      <option value="sp2000">sp2000</option>
+      <option value="cfh">CFH</option>
+      <option value="all-plant">全部搜索引擎</option>
+    </select> <button type="submit">专业搜索</button> </form>
+    
+  <form id="searchForm"> <input type="text" id="searchQuery" placeholder="输入搜索关键词"> 
+    <select id="engineSelect">
+      <option value="bing">Bing</option>
+      <option value="wechat">微信搜索</option>
+      <option value="zhihu">知乎搜索</option>
+      <option value="weibo">微博搜索</option>
+      <option value="all">全部搜索引擎</option>
+    </select> <button type="submit">网络搜索</button> </form>
+    
+  <script>    document.getElementById('searchForm').addEventListener('submit', function (event) { event.preventDefault(); var query = document.getElementById('searchQuery').value; var engine = document.getElementById('engineSelect').value; if (query.trim() === '') { alert('请输入搜索关键词'); return; } switch (engine) { 
+  case 'bing': window.open('https://www.bing.com/search?q=' + encodeURIComponent(query)); break; 
+  case 'wechat': window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query)); break; 
+  case 'zhihu': window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query)); break; 
+  case 'weibo': window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break; 
+  case 'all': 
+    window.open('https://www.bing.com/search?q=' + encodeURIComponent(query)); 
+    window.open('https://weixin.sogou.com/weixin?type=2&query=' + encodeURIComponent(query)); 
+    window.open('https://www.zhihu.com/search?type=content&q=' + encodeURIComponent(query)); 
+    window.open('https://s.weibo.com/weibo/' + encodeURIComponent(query)); break; 
+  case 'iplant': window.open('https://www.iplant.cn/info/' + encodeURIComponent(query)); break; 
+  case 'iflora-name': window.open('https://name.iflora.cn/Home/Search?q=' + encodeURIComponent(query) ); break; 
+  case 'iflora': window.open('https://www.iflora.cn/fast_search.aspx?q=' + encodeURIComponent(query) ); break; 
+  case 'cvh': window.open('https://www.cvh.ac.cn/spms/list.php?&taxonName=' + encodeURIComponent(query)); break; 
+  case 'jstor': window.open('https://jstor.botanicalgarden.cn/search?filter=name&so=ps_group_by_genus_species+asc&Query=' + encodeURIComponent(query) ); break; 
+  case 'cubg': window.open('https://image.cubg.cn/search?sort=default&text=' + encodeURIComponent(query) + '&taxonId='); break; 
+  case 'ipni': window.open('https://www.ipni.org/?q=' + encodeURIComponent(query)); break; 
+  case 'powo': window.open('https://powo.science.kew.org/results?q=' + encodeURIComponent(query)); break; 
+  case 'ppbc': window.open('https://ppbc.iplant.cn/list21?keyword=' + encodeURIComponent(query)); break; 
+  case 'sp2000': window.open('http://www.sp2000.org.cn/pageservices/species/scientificName/' + encodeURIComponent(query) + '/zh'); break; 
+  case 'cfh': window.open('https://www.cfh.ac.cn/Spdb/spsearch.aspx?aname=' + encodeURIComponent(query) ); break; 
+  case 'all-plant': 
+    window.open('https://www.iplant.cn/info/' + encodeURIComponent(query)); 
+    window.open('https://www.iflora.cn/fast_search.aspx?q=' + encodeURIComponent(query)); 
+    window.open('https://name.iflora.cn/Home/Search?q=' + encodeURIComponent(query)); 
+    window.open('https://www.cvh.ac.cn/spms/list.php?&taxonName=' + encodeURIComponent(query)); 
+    window.open('https://jstor.botanicalgarden.cn/search?filter=name&so=ps_group_by_genus_species+asc&Query=' + encodeURIComponent(query)); 
+    window.open('https://image.cubg.cn/search?sort=default&text=' + encodeURIComponent(query) + '&taxonId='); 
+    window.open('https://www.ipni.org/?q=' + encodeURIComponent(query));
+    window.open('https://powo.science.kew.org/results?q=' + encodeURIComponent(query)); 
+    window.open('https://ppbc.iplant.cn/list21?keyword=' + encodeURIComponent(query)); 
+    window.open('http://www.sp2000.org.cn/pageservices/species/scientificName/' + encodeURIComponent(query) + '/zh'); 
+    window.open('https://www.cfh.ac.cn/Spdb/spsearch.aspx?aname=' + encodeURIComponent(query)); break; 
+  default: alert('请选择一个搜索引擎'); } });  </script>
+  <!-- 定义一级标题 -->
+  <h1>常用网站</h1>
+  <ul
+    style="list-style-type: none;         display: flex;         justify-content: center;         align-items: center;         padding: 0;">
+    <li style="margin: 5px;"> <a href="http://www.iflora.cn/Image_recognition.aspx" target="_blank"> <img
+      src="http://www.iflora.cn/Images/kiblogo.gif" width="25" height="25"
+      class="logo">图片认植</a> </li>
+ 
+  </ul>
+
+  <script type="text/javascript" src="script.js"></script>
+</body>
+
+</html><!-- 引入外部脚本文件 -->
+<script type="text/javascript" src="script.js"></script>
+</body>
+
+</html>

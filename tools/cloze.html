@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki填空卡片生成器</title>
+    <style>
+        .text-box {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow-y: auto;
+        }
+
+        .highlight {
+            background-color: rgb(175, 230, 173);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Anki 填空卡片生成器</h1>
+    <button id="editMode" class="highlight">常规编辑模式</button>
+    <button id="c1Mode">c1 替换模式</button>
+    <button id="c123Mode">c123 替换模式</button>
+    <div class="text-box" contenteditable="true" id="textArea"></div>
+    <p>
+        一个简单的 Anki 填空卡片生成器，用户可以通过选中文本并点击相应按钮来生成填空卡片。<br><br>
+        点击 <b>常规编辑模式</b> 按钮会将当前模式设置为编辑模式，在这种模式下不会对选中的文本做任何处理。<br>
+        <br>点击 <b>c1 替换模式</b> 按钮会将当前模式设置为 c1 模式。选中的文本会被格式化为 {{c1::选中的文字}}。<br>
+        <br>点击 <b>c123 替换模式</b> 按钮会将当前模式设置为 c123 模式，并重置填空编号为 1。在这种模式下，选中的文本会被格式化为 {{c1::选中的文字}}、{{c2::选中的文字}} 以此类推。
+
+    </p>
+    <script>
+
+        // 设置初始模式为编辑模式
+        let currentMode = 'edit';
+
+        // 初始化填空编号为 1
+        let clozeNumber = 1;
+
+        // 定义一个函数，用于处理文本选中并进行填空操作
+        function wrapSelectionWithCloze() {
+            const textArea = document.getElementById('textArea');
+
+            // 获取当前选中的文本范围
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const selectedText = range.toString();
+
+                // 检查是否有选中的文本
+                if (selectedText) {
+                    let clozeText;
+
+                    // 根据当前模式生成填空文本
+                    // 根据 currentMode 的值来决定 clozeText 的格式
+                    if (currentMode === 'c1') {
+                        // 如果 currentMode 是 'c1'，则使用特定格式
+                        clozeText = `{{c1::${selectedText}}}`;
+                    } else if (currentMode === 'c123') {
+                        // 如果 currentMode 是 'c123'，则使用带数字的特定格式
+                        clozeText = `{{c${clozeNumber}::${selectedText}}}`;
+                        // 增加 clozeNumber 的值，用于下一次循环
+                        clozeNumber = (clozeNumber) + 1;
+                    } else {
+                        // 如果 currentMode 不是 'c1' 或 'c123'，则不进行替换操作
+                        return;
+                    }
+
+                    // 删除选中的文本内容
+                    range.deleteContents();
+
+                    // 插入生成的填空文本
+                    range.insertNode(document.createTextNode(clozeText));
+
+                    // 移除所有选中的范围
+                    selection.removeAllRanges();
+                }
+            }
+        }
+
+        // 为文本区域添加鼠标抬起事件监听器，当用户在文本区域中选中文本并抬起鼠标时，执行填空操作
+        document.getElementById('textArea').addEventListener('mouseup', wrapSelectionWithCloze);
+
+        // 为编辑模式按钮添加点击事件监听器，点击时设置当前模式为编辑模式，并移除其他按钮的高亮样式
+        document.getElementById('editMode').addEventListener('click', function () {
+            currentMode = 'edit';
+            document.getElementById('editMode').classList.add('highlight');
+            document.getElementById('c1Mode').classList.remove('highlight');
+            document.getElementById('c123Mode').classList.remove('highlight');
+        });
+
+        // 为 c1 模式按钮添加点击事件监听器，点击时设置当前模式为 c1 模式，并移除其他按钮的高亮样式
+        document.getElementById('c1Mode').addEventListener('click', function () {
+            currentMode = 'c1';
+            document.getElementById('editMode').classList.remove('highlight');
+            document.getElementById('c1Mode').classList.add('highlight');
+            document.getElementById('c123Mode').classList.remove('highlight');
+        });
+
+        // 为 c123 模式按钮添加点击事件监听器，点击时设置当前模式为 c123 模式，并重置填空编号为 1，且移除其他按钮的高亮样式
+        document.getElementById('c123Mode').addEventListener('click', function () {
+            currentMode = 'c123';
+            clozeNumber = 1; // 重置 clozeNumber
+            document.getElementById('editMode').classList.remove('highlight');
+            document.getElementById('c1Mode').classList.remove('highlight');
+            document.getElementById('c123Mode').classList.add('highlight');
+        });
+    </script>
+</body>
+
+</html>
