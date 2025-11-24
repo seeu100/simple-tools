@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中药功效连线匹配游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 100%; /* 移除最大宽度限制 */
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #34495e;
+            line-height: 1.6;
+        }
+        
+        .game-container {
+            display: flex;
+            width: 100%;
+            max-width: 100%; /* 移除最大宽度限制 */
+            height: 70vh;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .herbs-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: right; /* 中药选项靠左对齐 */
+            width: 30%; /* 设置宽度百分比 */
+        }
+        
+        .effects-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: left; /* 功效选项靠右对齐 */
+            width: 40%; /* 设置宽度百分比 */
+            margin-left: auto; /* 让容器靠到最右边 */
+        }
+        
+        .herb, .effect {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .herb {
+            border-left: 5px solid #3498db;
+            color: #2980b9;
+        }
+
+        .effect {
+            border-right: 5px solid #e74c3c;
+            color: #c0392b;
+        }
+
+        .herb.selected, .effect.selected {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            background-color: rgba(52, 152, 219, 0.2); /* 点击高亮颜色 */
+        }
+        
+        .herb.correct {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+        
+        .effect.correct {
+            background-color: #d4edda;
+            border-right: 5px solid #28a745;
+        }
+        
+        .herb-property, .effect-property {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        #connectionCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .score-container {
+            margin-top: 20px;
+            background-color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 1.3rem;
+            color: #2c3e50;
+        }
+        
+        #score {
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1.5rem;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        #resetBtn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        #resetBtn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        #checkBtn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        #checkBtn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* 移动端优化样式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                margin: 0;
+            }
+            
+            .header {
+                margin-bottom: 15px;
+                padding: 0 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+            
+            .instructions {
+                font-size: 0.9rem;
+                padding: 0 5px;
+            }
+            
+            .instructions p {
+                margin: 0;
+                line-height: 1.4;
+            }
+            
+            .game-container {
+                height: 50vh;
+                min-height: 300px;
+                max-height: 400px;
+                margin: 10px 0;
+                gap: 10px;
+            }
+            
+            .herbs-container, .effects-container {
+                gap: 8px;
+                padding: 10px 5px;
+            }
+            
+            .herb, .effect {
+                font-size: 0.85rem;
+                padding: 8px 10px;
+                margin: 2px 0;
+                min-height: 35px;
+                word-wrap: break-word;
+                line-height: 1.3;
+            }
+            
+            .effect-property {
+                font-size: 0.75rem;
+                margin-top: 3px;
+                line-height: 1.2;
+            }
+            
+            .score-container {
+                font-size: 1rem;
+                padding: 10px 15px;
+                margin: 10px 0;
+            }
+            
+            #score {
+                font-size: 1.2rem;
+            }
+            
+            .controls {
+                margin-top: 15px;
+                gap: 10px;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 1rem;
+                min-width: 120px;
+            }
+            
+            .feedback {
+                font-size: 1rem;
+                padding: 8px;
+                margin: 10px 0;
+                min-height: 40px;
+            }
+        }
+        
+        /* 超小屏幕进一步优化 */
+        @media (max-width: 375px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .herb, .effect {
+                font-size: 0.8rem;
+                padding: 6px 8px;
+                min-height: 30px;
+            }
+            
+            .effect-property {
+                font-size: 0.7rem;
+            }
+            
+            .game-container {
+                height: 45vh;
+                min-height: 250px;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>中药功效连线匹配</h1>
+        <div class="instructions">
+            <p>请将左侧的中药与右侧的功效正确连接起来。点击一种中药，再点击对应的功效，系统会自动绘制连线。完成所有匹配后点击"检查答案"。</p>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="herbs-container">
+            <!-- 中药选项会通过JS动态添加 -->
+        </div>
+        
+        <div class="effects-container">
+            <!-- 功效选项会通过JS动态添加 -->
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="connectionCanvas"></canvas>
+        </div>
+    </div>
+    
+    <div class="score-container">
+        当前得分: <span id="score">0</span> / <span id="total">0</span>
+    </div>
+    
+    <div class="controls">
+        <button id="resetBtn">重置游戏</button>
+        <button id="checkBtn">检查答案</button>
+    </div>
+    
+    <div class="feedback" id="feedback"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 中药数据
+            const herbsData = [
+                                {
+                    name: "麻黄",
+                    property: "辛、微苦，温。归肺、膀胱经。",
+                    effect: "发汗散寒，宣肺平喘，利水消肿。"
+                },
+                {
+                    name: "桂枝",
+                    property: "辛、甘，温。归心、肺、膀胱经。",
+                    effect: "发汗解肌，温通经脉，助阳化气。"
+                },
+                {
+                    name: "紫苏叶",
+                    property: "辛，温。归肺、脾经。",
+                    effect: "解表散寒，行气和胃。"
+                },
+                {
+                    name: "生姜",
+                    property: "辛，微温。归肺、脾、胃经。",
+                    effect: "解表散寒，温中止呕，温肺止咳，解鱼蟹毒。"
+                },
+                {
+                    name: "香薷",
+                    property: "辛，微温。归肺、胃经。",
+                    effect: "发汗解表，化湿和中，利水消肿。"
+                },
+                {
+                    name: "荆芥",
+                    property: "辛，微温。归肺、肝经。",
+                    effect: "解表散风，透疹，消疮；炒炭收敛止血。"
+                },
+                {
+                    name: "防风",
+                    property: "辛、甘，微温。归膀胱、肝、脾经。",
+                    effect: "祛风解表，胜湿止痛，止痉。"
+                },
+                {
+                    name: "羌活",
+                    property: "辛、苦，温。归膀胱、肾经。",
+                    effect: "解表散寒，祛风除湿，止痛。"
+                },
+                {
+                    name: "白芷",
+                    property: "辛，温。归胃、大肠、肺经。",
+                    effect: "解表散寒，祛风止痛，宣通鼻窍，燥湿止带，消肿排脓。"
+                },
+                {
+                    name: "细辛",
+                    property: "辛，温。归心、肺、肾经。",
+                    effect: "解表散寒，祛风止痛，通窍，温肺化饮。"
+                },
+                {
+                    name: "藁本",
+                    property: "辛，温。归膀胱经。",
+                    effect: "祛风，散寒，除湿，止痛。"
+                },
+                {
+                    name: "苍耳子",
+                    property: "辛、苦，温；有毒。归肺经。",
+                    effect: "散风寒，通鼻窍，祛风湿。"
+                },
+                {
+                    name: "辛夷",
+                    property: "辛，温。归肺、胃经。",
+                    effect: "散风寒，通鼻窍。"
+                },
+                {
+                    name: "薄荷",
+                    property: "辛，凉。归肺、肝经。",
+                    effect: "疏散风热，清利头目，利咽，透疹，疏肝行气。"
+                },
+                {
+                    name: "牛蒡子",
+                    property: "辛、苦，寒。归肺、胃经。",
+                    effect: "疏散风热，宣肺透疹，利咽解毒。"
+                },
+                {
+                    name: "蝉蜕",
+                    property: "甘，寒。归肺、肝经。",
+                    effect: "疏散风热，利咽，透疹，明目退翳，解痉。"
+                },
+                {
+                    name: "桑叶",
+                    property: "甘、苦，寒。归肺、肝经。",
+                    effect: "疏散风热，清肺润燥，清肝明目。"
+                },
+                {
+                    name: "菊花",
+                    property: "甘、苦，微寒。归肺、肝经。",
+                    effect: "散风清热，平肝明目，清热解毒。"
+                },
+                {
+                    name: "蔓荆子",
+                    property: "辛、苦，微寒。归膀胱、肝、胃经。",
+                    effect: "疏散风热，清利头目。"
+                },
+                {
+                    name: "柴胡",
+                    property: "苦、辛，微寒。归肝、胆、肺经。",
+                    effect: "疏散退热，疏肝解郁，升举阳气。"
+                },
+                {
+                    name: "升麻",
+                    property: "辛、微甘，微寒。归肺、脾、胃、大肠经。",
+                    effect: "发表透疹，清热解毒，升举阳气。"
+                },
+                {
+                    name: "葛根",
+                    property: "甘、辛，凉。归脾、胃、肺经。",
+                    effect: "解肌退热，生津止渴，透疹，升阳止泻，通经活络，解酒毒。"
+                },
+                {
+                    name: "石膏",
+                    property: "甘、辛，大寒。归肺、胃经。",
+                    effect: "生用：清热泻火，除烦止渴；煅用：收湿，生肌，敛疮，止血。"
+                },
+                {
+                    name: "知母",
+                    property: "苦、甘，寒。归肺、胃、肾经。",
+                    effect: "清热泻火，滋阴润燥。"
+                },
+                {
+                    name: "芦根",
+                    property: "甘，寒。归肺、胃经。",
+                    effect: "清热泻火，生津止渴，除烦，止呕，利尿。"
+                },
+                {
+                    name: "天花粉",
+                    property: "甘、微苦，微寒。归肺、胃经。",
+                    effect: "清热泻火，生津止渴，消肿排脓。"
+                },
+                {
+                    name: "淡竹叶",
+                    property: "甘、淡，寒。归心、胃、小肠经。",
+                    effect: "清热泻火，除烦止渴，利尿通淋。"
+                },
+                {
+                    name: "栀子",
+                    property: "苦，寒。归心、肺、三焦经。",
+                    effect: "泻火除烦，清热利湿，凉血解毒；外用消肿止痛。"
+                },
+                {
+                    name: "夏枯草",
+                    property: "辛、苦，寒。归肝、胆经。",
+                    effect: "清肝明目，散结消肿。"
+                },
+                {
+                    name: "决明子",
+                    property: "甘、苦、咸，微寒。归肝、大肠经。",
+                    effect: "清热明目，润肠通便。"
+                },
+                {
+                    name: "黄芩",
+                    property: "苦，寒。归肺、胆、脾、大肠、小肠经。",
+                    effect: "清热燥湿，泻火解毒，止血，安胎。"
+                },
+                {
+                    name: "黄连",
+                    property: "苦，寒。归心、脾、胃、肝、胆、大肠经。",
+                    effect: "清热燥湿，泻火解毒。"
+                },
+                {
+                    name: "黄柏",
+                    property: "苦，寒。归肾、膀胱经。",
+                    effect: "清热燥湿，泻火除蒸，解毒疗疮。"
+                },
+                {
+                    name: "龙胆",
+                    property: "苦，寒。归肝、胆经。",
+                    effect: "清热燥湿，泻肝胆火。"
+                },
+                {
+                    name: "苦参",
+                    property: "苦，寒。归心、肝、胃、大肠、膀胱经。",
+                    effect: "清热燥湿，杀虫，利尿。"
+                },
+                {
+                    name: "白鲜皮",
+                    property: "苦，寒。归脾、胃、膀胱经。",
+                    effect: "清热燥湿，祛风解毒。"
+                },
+                {
+                    name: "金银花",
+                    property: "甘，寒。归肺、心、胃经。",
+                    effect: "清热解毒，疏散风热。"
+                },
+                {
+                    name: "连翘",
+                    property: "苦，微寒。归肺、心、小肠经。",
+                    effect: "清热解毒，消肿散结，疏散风热。"
+                },
+                {
+                    name: "穿心莲",
+                    property: "苦，寒。归心、肺、大肠、膀胱经。",
+                    effect: "清热解毒，凉血，消肿。"
+                },
+                {
+                    name: "大青叶",
+                    property: "苦，寒。归心、胃经。",
+                    effect: "清热解毒，凉血消斑。"
+                },
+                {
+                    name: "板蓝根",
+                    property: "苦，寒。归心、胃经。",
+                    effect: "清热解毒，凉血利咽。"
+                },
+                {
+                    name: "青黛",
+                    property: "咸，寒。归肝经。",
+                    effect: "清热解毒，凉血消斑，泻火定惊。"
+                },
+                {
+                    name: "贯众",
+                    property: "苦，微寒；有小毒。归肝、胃经。",
+                    effect: "清热解毒，止血，杀虫。"
+                },
+                {
+                    name: "蒲公英",
+                    property: "苦、甘，寒。归肝、胃经。",
+                    effect: "清热解毒，消肿散结，利尿通淋。"
+                },
+                {
+                    name: "紫花地丁",
+                    property: "苦、辛，寒。归心、肝经。",
+                    effect: "清热解毒，凉血消肿。"
+                },
+                {
+                    name: "野菊花",
+                    property: "苦、辛，微寒。归肝、心经。",
+                    effect: "清热解毒，泻火平肝。"
+                },
+                {
+                    name: "重楼",
+                    property: "苦，微寒；有小毒。归肝经。",
+                    effect: "清热解毒，消肿止痛，凉肝定惊。"
+                },
+                {
+                    name: "土茯苓",
+                    property: "甘、淡，平。归肝、胃经。",
+                    effect: "解毒，除湿，通利关节。"
+                },
+                {
+                    name: "鱼腥草",
+                    property: "辛，微寒。归肺经。",
+                    effect: "清热解毒，消痈排脓，利尿通淋。"
+                },
+                {
+                    name: "大血藤",
+                    property: "苦，平。归大肠、肝经。",
+                    effect: "清热解毒，活血，祛风止痛。"
+                },
+                {
+                    name: "败酱草",
+                    property: "辛、苦，微寒。归胃、大肠、肝经。",
+                    effect: "清热解毒，消痈排脓，祛瘀止痛。"
+                },
+                {
+                    name: "射干",
+                    property: "苦，寒。归肺经。",
+                    effect: "清热解毒，祛痰，利咽。"
+                },
+                {
+                    name: "山豆根",
+                    property: "苦，寒；有毒。归肺、胃经。",
+                    effect: "清热解毒，消肿利咽。"
+                },
+                {
+                    name: "马勃",
+                    property: "辛，平。归肺经。",
+                    effect: "清肺利咽，止血。"
+                },
+                {
+                    name: "白头翁",
+                    property: "苦，寒。归胃、大肠经。",
+                    effect: "清热解毒，凉血止痢。"
+                },
+                {
+                    name: "马齿苋",
+                    property: "酸，寒。归肝、大肠经。",
+                    effect: "清热解毒，凉血止血，止痢。"
+                },
+                {
+                    name: "鸦胆子",
+                    property: "苦，寒；有小毒。归大肠、肝经。",
+                    effect: "清热解毒，止痢，截疟；外用腐蚀赘疣。"
+                },
+                {
+                    name: "半边莲",
+                    property: "辛，平。归心、小肠、肺经。",
+                    effect: "清热解毒，利尿消肿。"
+                },
+                {
+                    name: "白花蛇舌草",
+                    property: "微苦、甘，寒。归胃、大肠、小肠经。",
+                    effect: "清热解毒，散结消肿，利湿通淋。"
+                },
+                {
+                    name: "熊胆粉",
+                    property: "苦，寒。归肝、胆、心经。",
+                    effect: "清热解毒，息风止痉，清肝明目。"
+                },
+                {
+                    name: "白蔹",
+                    property: "苦，微寒。归心、胃经。",
+                    effect: "清热解毒，消痈散结，敛疮生肌。"
+                },
+                {
+                    name: "生地黄",
+                    property: "甘，寒。归心、肝、肾经。",
+                    effect: "清热凉血，养阴生津。"
+                },
+                {
+                    name: "玄参",
+                    property: "甘、苦、咸，微寒。归肺、胃、肾经。",
+                    effect: "清热凉血，滋阴降火，解毒散结。"
+                },
+                {
+                    name: "牡丹皮",
+                    property: "苦、辛，微寒。归心、肝、肾经。",
+                    effect: "清热凉血，活血化瘀。"
+                },
+                {
+                    name: "赤芍",
+                    property: "苦，微寒。归肝经。",
+                    effect: "清热凉血，散瘀止痛。"
+                },
+                {
+                    name: "紫草",
+                    property: "甘、咸，寒。归心、肝经。",
+                    effect: "清热凉血，活血解毒，透疹消斑。"
+                },
+                {
+                    name: "水牛角",
+                    property: "苦，寒。归心、肝经。",
+                    effect: "清热凉血，解毒，定惊。"
+                },
+                {
+                    name: "青蒿",
+                    property: "苦、辛，寒。归肝、胆经。",
+                    effect: "清虚热，除骨蒸，解暑，截疟，退黄。"
+                },
+                {
+                    name: "白薇",
+                    property: "苦、咸，寒。归胃、肝、肾经。",
+                    effect: "清热凉血，利尿通淋，解毒疗疮。"
+                },
+                {
+                    name: "地骨皮",
+                    property: "甘，寒。归肺、肝、肾经。",
+                    effect: "凉血除蒸，清肺降火。"
+                },
+                {
+                    name: "银柴胡",
+                    property: "甘，微寒。归肝、胃经。",
+                    effect: "清虚热，除疳热。"
+                },
+                {
+                    name: "胡黄连",
+                    property: "苦，寒。归肝、胃、大肠经。",
+                    effect: "退虚热，除疳热，清湿热。"
+                },
+                {
+                    name: "大黄",
+                    property: "苦，寒。归脾、胃、大肠、肝、心包经。",
+                    effect: "泻下攻积，清热泻火，凉血解毒，活血逐瘀，利湿退黄。"
+                },
+                {
+                    name: "芒硝",
+                    property: "咸、苦，寒。归胃、大肠经。",
+                    effect: "泻下通便，润燥软坚，清火消肿。"
+                },
+                {
+                    name: "番泻叶",
+                    property: "甘、苦，寒。归大肠经。",
+                    effect: "泻热通便，利水。"
+                },
+                {
+                    name: "芦荟",
+                    property: "苦，寒。归肝、胃、大肠经。",
+                    effect: "泻下通便，清肝泻火，杀虫疗疳。"
+                },
+                {
+                    name: "火麻仁",
+                    property: "甘，平。归脾、胃、大肠经。",
+                    effect: "润肠通便。"
+                },
+                {
+                    name: "郁李仁",
+                    property: "辛、苦、甘，平。归脾、大肠、小肠经。",
+                    effect: "润肠通便，下气利水。"
+                },
+                {
+                    name: "甘遂",
+                    property: "苦，寒；有毒。归肺、肾、大肠经。",
+                    effect: "泻水逐饮，消肿散结。"
+                },
+                {
+                    name: "京大戟",
+                    property: "苦，寒；有毒。归肺、脾、肾经。",
+                    effect: "泻水逐饮，消肿散结。"
+                },
+                {
+                    name: "芫花",
+                    property: "苦、辛，温；有毒。归肺、脾、肾经。",
+                    effect: "泻水逐饮，外用杀虫疗疮。"
+                },
+                {
+                    name: "商陆",
+                    property: "苦，寒；有毒。归肺、脾、肾、大肠经。",
+                    effect: "逐水消肿，通利二便。外用解毒散结。"
+                },
+                {
+                    name: "牵牛子",
+                    property: "苦，寒；有毒。归肺、肾、大肠经。",
+                    effect: "泻水通便，消痰涤饮，杀虫攻积。"
+                },
+                {
+                    name: "巴豆霜",
+                    property: "辛，热；有大毒。归胃、大肠经。",
+                    effect: "峻下冷积，逐水退肿，祛痰利咽，外用蚀疮。"
+                },
+                {
+                    name: "独活",
+                    property: "辛、苦，微温。归肾、膀胱经。",
+                    effect: "祛风湿，通痹止痛。"
+                },
+                {
+                    name: "威灵仙",
+                    property: "辛、咸，温。归膀胱经。",
+                    effect: "祛风湿，通经络。"
+                },
+                {
+                    name: "徐长卿",
+                    property: "辛、温。归肝、胃经。",
+                    effect: "祛风，化湿，止痛，止痒。"
+                },
+                {
+                    name: "川乌",
+                    property: "辛、苦，热；有大毒。归心、肝、肾、脾经。",
+                    effect: "祛风除湿，温经止痛。"
+                },
+                {
+                    name: "蕲蛇",
+                    property: "甘、咸，温；有毒。归肝经。",
+                    effect: "祛风，通络，止痉。"
+                },
+                {
+                    name: "木瓜",
+                    property: "酸，温。归肝、脾经。",
+                    effect: "祛风湿，舒筋活络，和胃化湿。"
+                },
+                {
+                    name: "秦艽",
+                    property: "辛、苦，平。归胃、肝、胆经。",
+                    effect: "祛风湿，清湿热，止痹痛，退虚热。"
+                },
+                {
+                    name: "防己",
+                    property: "苦，寒。归膀胱、肺经。",
+                    effect: "祛风止痛，利水消肿。"
+                },
+                {
+                    name: "桑枝",
+                    property: "微苦，平。归肝经。",
+                    effect: "祛风湿，利关节。"
+                },
+                {
+                    name: "豨莶草",
+                    property: "辛、苦，寒。归肝、肾经。",
+                    effect: "祛风湿，利关节，解毒。"
+                },
+                {
+                    name: "络石藤",
+                    property: "苦，微寒。归心、肝、肾经。",
+                    effect: "祛风通络，凉血消肿。"
+                },
+                {
+                    name: "雷公藤",
+                    property: "苦，寒；有毒。归肝、肾经。",
+                    effect: "祛风湿，活血通络，消肿定痛。"
+                },
+                {
+                    name: "桑寄生",
+                    property: "苦、甘，平。归肝、肾经。",
+                    effect: "祛风湿，补肝肾，强筋骨，安胎元。"
+                },
+                {
+                    name: "五加皮",
+                    property: "辛、苦，温。归肝、肾经。",
+                    effect: "祛风除湿，补益肝肾，强筋壮骨，利水消肿。"
+                },
+                {
+                    name: "狗脊",
+                    property: "苦、甘，温。归肝、肾经。",
+                    effect: "祛风湿，补肝肾，强腰膝。"
+                },
+                {
+                    name: "千年健",
+                    property: "苦、辛，温。归肝、肾经。",
+                    effect: "祛风湿，健筋骨。"
+                },
+                {
+                    name: "广藿香",
+                    property: "辛，微温。归脾、胃、肺经。",
+                    effect: "芳香化浊，和中止呕，发表解暑。"
+                },
+                {
+                    name: "佩兰",
+                    property: "辛，平。归脾、胃、肺经。",
+                    effect: "芳香化湿，醒脾开胃，发表解暑。"
+                },
+                {
+                    name: "苍术",
+                    property: "辛、苦，温。归脾、胃、肝经。",
+                    effect: "燥湿健脾，祛风散寒，明目。"
+                },
+                {
+                    name: "厚朴",
+                    property: "苦、辛，温。归脾、胃、肺、大肠经。",
+                    effect: "燥湿消痰，下气除满。"
+                },
+                {
+                    name: "砂仁",
+                    property: "辛，温。归脾、胃、肾经。",
+                    effect: "化湿开胃，温脾止泻，理气安胎。"
+                },
+                {
+                    name: "豆蔻",
+                    property: "辛，温。归肺、脾、胃经。",
+                    effect: "化湿行气，温中止呕，开胃消食。"
+                },
+                {
+                    name: "草豆蔻",
+                    property: "辛，温。归脾、胃经。",
+                    effect: "燥湿行气，温中止呕。"
+                },
+                {
+                    name: "草果",
+                    property: "辛，温。归脾、胃经。",
+                    effect: "燥湿温中，截疟除痰。"
+                },
+                {
+                    name: "茯苓",
+                    property: "甘、淡，平。归心、肺、脾、肾经。",
+                    effect: "利水渗湿，健脾，宁心。"
+                },
+                {
+                    name: "薏苡仁",
+                    property: "甘、淡，凉。归脾、胃、肺经。",
+                    effect: "利水渗湿，健脾止泻，除痹，排脓，解毒散结。"
+                },
+                {
+                    name: "猪苓",
+                    property: "甘、淡，平。归肾、膀胱经。",
+                    effect: "利水渗湿。"
+                },
+                {
+                    name: "泽泻",
+                    property: "甘、淡，寒。归肾、膀胱经。",
+                    effect: "利水渗湿，泄热，化浊降脂。"
+                },
+                {
+                    name: "香加皮",
+                    property: "辛、苦，温；有毒。归肝、肾、心经。",
+                    effect: "利水消肿，祛风湿，强筋骨。"
+                },
+                {
+                    name: "车前子",
+                    property: "甘，寒。归肝、肾、肺、小肠经。",
+                    effect: "清热利尿通淋，渗湿止泻，明目，祛痰。"
+                },
+                {
+                    name: "滑石",
+                    property: "甘、淡，寒。归膀胱、肺、胃经。",
+                    effect: "利尿通淋，清热解暑；外用祛湿敛疮。"
+                },
+                {
+                    name: "木通",
+                    property: "苦，寒。归心、小肠、膀胱经。",
+                    effect: "利尿通淋，清心除烦，通经下乳。"
+                },
+                {
+                    name: "通草",
+                    property: "甘、淡，微寒。归肺、胃经。",
+                    effect: "清热利尿，通气下乳。"
+                },
+                {
+                    name: "瞿麦",
+                    property: "苦，寒。归心、小肠经。",
+                    effect: "利尿通淋，活血通经。"
+                },
+                {
+                    name: "萹蓄",
+                    property: "苦，微寒。归膀胱经。",
+                    effect: "利尿通淋，杀虫，止痒。"
+                },
+                {
+                    name: "地肤子",
+                    property: "辛、苦，寒。归肾、膀胱经。",
+                    effect: "清热利湿，祛风止痒。"
+                },
+                {
+                    name: "海金沙",
+                    property: "甘、咸，寒。归膀胱、小肠经。",
+                    effect: "清热利湿，通淋止痛。"
+                },
+                {
+                    name: "石韦",
+                    property: "甘、苦，微寒。归肺、膀胱经。",
+                    effect: "利尿通淋，清肺止咳，凉血止血。"
+                },
+                {
+                    name: "萆薢",
+                    property: "苦，平。归肾、胃经。",
+                    effect: "利湿去浊，祛风除痹。"
+                },
+                {
+                    name: "茵陈",
+                    property: "苦、辛，微寒。归脾、胃、肝、胆经。",
+                    effect: "清利湿热，利胆退黄。"
+                },
+                {
+                    name: "金钱草",
+                    property: "甘、咸，微寒。归肝、胆、肾、膀胱经。",
+                    effect: "利湿退黄，利尿通淋，解毒消肿。"
+                },
+                {
+                    name: "虎杖",
+                    property: "微苦，微寒。归肝、胆、肺经。",
+                    effect: "利湿退黄，清热解毒，散瘀止痛，止咳化痰。"
+                },
+                {
+                    name: "垂盆草",
+                    property: "甘、淡，凉。归肝、胆、小肠经。",
+                    effect: "利湿退黄，清热解毒。"
+                },
+                {
+                    name: "附子",
+                    property: "辛、甘，大热；有毒。归心、肾、脾经。",
+                    effect: "回阳救逆，补火助阳，散寒止痛。"
+                },
+                {
+                    name: "干姜",
+                    property: "辛，热。归脾、胃、肾、心、肺经。",
+                    effect: "温中散寒，回阳通脉，温肺化饮。"
+                },
+                {
+                    name: "肉桂",
+                    property: "辛、甘，大热。归肾、脾、心、肝经。",
+                    effect: "补火助阳，引火归元，散寒止痛，温通经脉。"
+                },
+                {
+                    name: "吴茱萸",
+                    property: "辛、苦，热；有小毒。归肝、脾、胃、肾经。",
+                    effect: "散寒止痛，降逆止呕，助阳止泻。"
+                },
+                {
+                    name: "小茴香",
+                    property: "辛，温。归肝、肾、脾、胃经。",
+                    effect: "散寒止痛，理气和胃。"
+                },
+                {
+                    name: "丁香",
+                    property: "辛，温。归脾、胃、肺、肾经。",
+                    effect: "温中降逆，补肾助阳。"
+                },
+                {
+                    name: "高良姜",
+                    property: "辛，热。归脾、胃经。",
+                    effect: "温胃止呕，散寒止痛。"
+                },
+                {
+                    name: "花椒",
+                    property: "辛，温。归脾、胃、肾经。",
+                    effect: "温中止痛，杀虫止痒。"
+                },
+                {
+                    name: "荜茇",
+                    property: "辛，热。归胃、大肠经。",
+                    effect: "温中散寒，下气止痛。"
+                },
+                {
+                    name: "荜澄茄",
+                    property: "辛，温。归脾、胃、肾、膀胱经。",
+                    effect: "温中散寒，行气止痛。"
+                },
+                {
+                    name: "陈皮",
+                    property: "苦、辛，温。归脾、肺经。",
+                    effect: "理气健脾，燥湿化痰。"
+                },
+                {
+                    name: "青皮",
+                    property: "苦、辛，温。归肝、胆、胃经。",
+                    effect: "疏肝破气，消积化滞。"
+                },
+                {
+                    name: "枳实",
+                    property: "苦、辛、酸，微寒。归脾、胃经。",
+                    effect: "破气消积，化痰散痞。"
+                },
+                {
+                    name: "木香",
+                    property: "辛、苦，温。归脾、胃、大肠、三焦、胆经。",
+                    effect: "行气止痛，健脾消食。"
+                },
+                {
+                    name: "沉香",
+                    property: "辛、苦、微温。归脾、胃、肾经。",
+                    effect: "行气止痛，温胃止呕，纳气平喘。"
+                },
+                {
+                    name: "川楝子",
+                    property: "苦，寒；有小毒。归肝、小肠、膀胱经。",
+                    effect: "疏肝泄热，行气止痛，杀虫。"
+                },
+                {
+                    name: "乌药",
+                    property: "辛，温。归肺、脾、肾、膀胱经。",
+                    effect: "行气止痛，温肾散寒。"
+                },
+                {
+                    name: "荔枝核",
+                    property: "甘、微苦，温。归肝、胃经。",
+                    effect: "行气散结，散寒止痛。"
+                },
+                {
+                    name: "香附",
+                    property: "辛、微苦、微甘，平。归肝、脾、三焦经。",
+                    effect: "疏肝解郁，调经止痛，理气宽中。"
+                },
+                {
+                    name: "佛手",
+                    property: "辛、苦、酸，温。归肝、脾、胃、肺经。",
+                    effect: "疏肝理气，和胃止痛，燥湿化痰。"
+                },
+                {
+                    name: "香橼",
+                    property: "辛、苦、酸，温。归肝、脾、肺经。",
+                    effect: "疏肝理气，宽中，化痰。"
+                },
+                {
+                    name: "玫瑰花",
+                    property: "甘，微苦，温。归肝、脾经。",
+                    effect: "行气解郁，和血，止痛。"
+                },
+                {
+                    name: "薤白",
+                    property: "辛、苦，温。归心、胃、大肠经。",
+                    effect: "通阳散结，行气导滞。"
+                },
+                {
+                    name: "大腹皮",
+                    property: "辛，微温。归脾、胃、大肠、小肠经。",
+                    effect: "行气宽中，利水消肿。"
+                },
+                {
+                    name: "土木香",
+                    property: "辛、苦，温。归肝、脾经。",
+                    effect: "健脾和胃，行气止痛，安胎。"
+                },
+                {
+                    name: "甘松",
+                    property: "辛、甘，温。归脾、胃经。",
+                    effect: "理气止痛，开郁醒脾；外用祛湿消肿。"
+                },
+                {
+                    name: "柿蒂",
+                    property: "苦、涩，平。归胃经。",
+                    effect: "降气止呃。"
+                },
+                
+                {
+                    name: "山楂",
+                    property: "酸、甘，微温。归脾、胃、肝经。",
+                    effect: "消食健胃，行气散瘀，化浊降脂。"
+                },
+                {
+                    name: "六神曲",
+                    property: "甘、辛，温。归脾、胃经。",
+                    effect: "消食化积，健脾和胃。"
+                },
+                {
+                    name: "麦芽",
+                    property: "甘，平。归脾、胃、肝经。",
+                    effect: "行气消食，健脾开胃，回乳消胀。"
+                },
+                {
+                    name: "莱菔子",
+                    property: "辛、甘，平。归肺、脾、胃经。",
+                    effect: "消食除胀，降气化痰。"
+                },
+                {
+                    name: "鸡内金",
+                    property: "甘，平。归脾、胃、小肠、膀胱经。",
+                    effect: "健胃消食，涩精止遗，通淋化石。"
+                },
+                {
+                    name: "使君子",
+                    property: "甘，温。归脾、胃经。",
+                    effect: "杀虫消积。"
+                },
+                {
+                    name: "苦楝皮",
+                    property: "苦，寒；有毒。归肝、脾、胃经。",
+                    effect: "杀虫，疗癣。"
+                },
+                {
+                    name: "槟榔",
+                    property: "苦、辛，温。归胃、大肠经。",
+                    effect: "驱虫，消积，行气，利水，截疟。"
+                },
+                {
+                    name: "南瓜子",
+                    property: "甘，平。归胃、大肠经。",
+                    effect: "杀虫。"
+                },
+                {
+                    name: "鹤草芽",
+                    property: "苦、涩，凉。归胃、大肠经。",
+                    effect: "杀虫。"
+                },
+                {
+                    name: "雷丸",
+                    property: "微苦，寒。归胃、大肠经。",
+                    effect: "杀虫消积。"
+                },
+                {
+                    name: "榧子",
+                    property: "甘，平。归肺、胃、大肠经。",
+                    effect: "杀虫消积，润燥止咳，润肠通便。"
+                },
+                {
+                    name: "小蓟",
+                    property: "甘、苦，凉。归心、肝经。",
+                    effect: "凉血止血，散瘀解毒消痈。"
+                },
+                {
+                    name: "大蓟",
+                    property: "甘、苦，凉。归心、肝经。",
+                    effect: "凉血止血，散瘀解毒消痈。"
+                },
+                {
+                    name: "地榆",
+                    property: "苦、酸、涩，微寒。归肝、大肠经。",
+                    effect: "凉血止血，解毒敛疮。"
+                },
+                {
+                    name: "槐花",
+                    property: "苦，微寒。归肝、大肠经。",
+                    effect: "凉血止血，清肝泻火。"
+                },
+                {
+                    name: "侧柏叶",
+                    property: "苦、涩，寒。归肺、肝、脾经。",
+                    effect: "凉血止血，化痰止咳，生发乌发。"
+                },
+                {
+                    name: "白茅根",
+                    property: "甘，寒。归肺、胃、膀胱经。",
+                    effect: "凉血止血，清热利尿。"
+                },
+                {
+                    name: "苎麻根",
+                    property: "甘，寒。归肝、心、膀胱经。",
+                    effect: "凉血止血，安胎，清热解毒。"
+                },
+                {
+                    name: "三七",
+                    property: "甘、微苦，温。归肝、胃经。",
+                    effect: "散瘀止血，消肿定痛。"
+                },
+                {
+                    name: "茜草",
+                    property: "苦，寒。归肝经。",
+                    effect: "凉血，祛瘀，止血，通经。"
+                },
+                {
+                    name: "花蕊石",
+                    property: "酸、涩，平。归肝经。",
+                    effect: "化瘀止血。"
+                },{
+                    name: "蒲黄",
+                    property: "甘，平。归肝、心包经。",
+                    effect: "止血，化瘀，通淋。"
+                },
+                {
+                    name: "降香",
+                    property: "辛，温。归肝、脾经。",
+                    effect: "化瘀止血，理气止痛。"
+                },
+                {
+                    name: "白及",
+                    property: "苦、甘、涩，微寒。归肺、肝、胃经。",
+                    effect: "收敛止血，消肿生肌。"
+                },
+                {
+                    name: "仙鹤草",
+                    property: "苦、涩，平。归心、肝经。",
+                    effect: "收敛止血，截疟，止痢，解毒，补虚。"
+                },
+                {
+                    name: "紫珠叶",
+                    property: "苦、涩，凉。归肝、肺、胃经。",
+                    effect: "凉血收敛止血，散瘀解毒消肿。"
+                },
+                {
+                    name: "棕榈",
+                    property: "苦、涩，平。归肺、肝、大肠经。",
+                    effect: "收敛止血。"
+                },
+                {
+                    name: "艾叶",
+                    property: "辛、苦，温；有小毒。归肝、脾、肾经。",
+                    effect: "温经止血，散寒止痛；外用祛湿止痒。"
+                },
+                {
+                    name: "炮姜",
+                    property: "辛、热。归脾、胃、肾经。",
+                    effect: "温经止血，温中止痛。"
+                },
+                {
+                    name: "川芎",
+                    property: "辛，温。归肝、胆、心包经。",
+                    effect: "活血行气，祛风止痛。"
+                },
+                {
+                    name: "延胡索",
+                    property: "辛、苦，温。归肝、脾经。",
+                    effect: "活血，行气，止痛。"
+                },
+                {
+                    name: "郁金",
+                    property: "辛、苦，寒。归肝、胆、心经。",
+                    effect: "活血止痛，行气解郁，清心凉血，利胆退黄。"
+                },
+                {
+                    name: "姜黄",
+                    property: "辛、苦，温。归肝、脾经。",
+                    effect: "破血行气，通经止痛。"
+                },
+                {
+                    name: "乳香",
+                    property: "辛、苦，温。归心、肝、脾经。",
+                    effect: "活血止痛，消肿生肌。"
+                },
+                {
+                    name: "五灵脂",
+                    property: "苦、咸、甘，温。归肝经。",
+                    effect: "活血止痛，化瘀止血。"
+                },
+                {
+                    name: "丹参",
+                    property: "苦，微寒。归心、肝经。",
+                    effect: "活血祛瘀，通经止痛，清心除烦，凉血消痈。"
+                },
+                {
+                    name: "红花",
+                    property: "辛，温。归心、肝经。",
+                    effect: "活血通经，散瘀止痛。"
+                },
+                {
+                    name: "桃仁",
+                    property: "苦、甘，平。归心、肝、大肠经。",
+                    effect: "活血祛瘀，润肠通便，止咳平喘。"
+                },
+                {
+                    name: "益母草",
+                    property: "苦、辛，微寒。归肝、心包、膀胱经。",
+                    effect: "活血调经，利尿消肿，清热解毒。"
+                },
+                {
+                    name: "泽兰",
+                    property: "苦、辛，微温。归肝、脾经。",
+                    effect: "活血调经，祛瘀消痈，利水消肿。"
+                },
+                {
+                    name: "牛膝",
+                    property: "苦、甘、酸，平。归肝、肾经。",
+                    effect: "逐瘀通经，补肝肾，强筋骨，利尿通淋，引血下行。"
+                },
+                {
+                    name: "鸡血藤",
+                    property: "苦、甘，温。归肝、肾经。",
+                    effect: "活血补血，调经止痛，舒筋活络。"
+                },
+                {
+                    name: "王不留行",
+                    property: "苦，平。归肝、胃经。",
+                    effect: "活血通经，下乳消肿，利尿通淋。"
+                },
+                {
+                    name: "土鳖虫",
+                    property: "咸，寒；有小毒。归肝经。",
+                    effect: "破血逐瘀，续筋接骨。"
+                },
+                {
+                    name: "马钱子",
+                    property: "苦，温；有大毒。归肝、脾经。",
+                    effect: "通络止痛，散结消肿。"
+                },
+                {
+                    name: "苏木",
+                    property: "甘、咸，平。归心、肝、脾经。",
+                    effect: "活血祛瘀，消肿止痛。"
+                },
+                {
+                    name: "骨碎补",
+                    property: "苦，温。归肝、肾经。",
+                    effect: "活血止痛，补肾强骨。外用消风祛斑。"
+                },
+                {
+                    name: "血竭",
+                    property: "甘、咸，平。归心、肝经。",
+                    effect: "活血定痛，化瘀止血，生肌敛疮。"
+                },
+                {
+                    name: "刘寄奴",
+                    property: "苦，温。归心、肝、脾经。",
+                    effect: "散瘀止痛，止血消肿，活血通经，消食化积。"
+                },
+                {
+                    name: "莪术",
+                    property: "辛、苦，温。归肝、脾经。",
+                    effect: "破血行气，消积止痛。"
+                },
+                {
+                    name: "水蛭",
+                    property: "咸、苦，平；有小毒。归肝经。",
+                    effect: "破血通经，逐瘀消癥。"
+                },
+                {
+                    name: "斑蝥",
+                    property: "辛，热；有大毒。归肝、胃、肾经。",
+                    effect: "破血逐瘀，散结消癥，攻毒蚀疮。"
+                },
+                {
+                    name: "穿山甲",
+                    property: "咸，微寒。归肝、胃经。",
+                    effect: "活血消癥，通经下乳，消肿排脓，搜风通络。"
+                },
+                {
+                    name: "半夏",
+                    property: "辛，温。有毒。归脾、胃、肺经。",
+                    effect: "燥湿化痰，降逆止呕，消痞散结。"
+                },
+                {
+                    name: "天南星",
+                    property: "苦、辛，温；有毒。归肺、肝、脾经。",
+                    effect: "燥湿化痰，祛风止痉；外用散结消肿。"
+                },
+                {
+                    name: "白附子",
+                    property: "辛，温；有毒。归胃、肝经。",
+                    effect: "祛风痰，定惊搐，止痛，解毒散结。"
+                },
+                {
+                    name: "芥子",
+                    property: "辛，温。归肺经。",
+                    effect: "温肺豁痰利气，散结通络止痛。"
+                },
+                {
+                    name: "旋覆花",
+                    property: "苦、辛、咸，微温。归肺、脾、胃、大肠经。",
+                    effect: "降气，消痰，行水，止呕。"
+                },
+                {
+                    name: "白前",
+                    property: "辛、苦，微温。归肺经。",
+                    effect: "降气，消痰，止咳。"
+                },
+                
+                {
+                    name: "川贝母",
+                    property: "苦、甘，微寒。归肺、心经。",
+                    effect: "清热润肺，化痰止咳，散结消痈。"
+                },
+                {
+                    name: "浙贝母",
+                    property: "苦，寒。归肺、心经。",
+                    effect: "清热化痰止咳，解毒散结消痈。"
+                },
+                {
+                    name: "瓜蒌",
+                    property: "甘、微苦，寒。归肺、胃、大肠经。",
+                    effect: "清热涤痰，宽胸散结，润燥滑肠。"
+                },
+                {
+                    name: "竹茹",
+                    property: "甘，微寒。归肺、胃、心、胆经。",
+                    effect: "清热化痰，除烦，止呕。"
+                },
+                {
+                    name: "前胡",
+                    property: "苦、辛，微寒。归肺经。",
+                    effect: "降气化痰，散风清热。"
+                },
+                {
+                    name: "桔梗",
+                    property: "苦、辛，平。归肺经。",
+                    effect: "宣肺，祛痰，利咽，排脓。"
+                },
+                {
+                    name: "胖大海",
+                    property: "甘，寒。归肺、大肠经。",
+                    effect: "清热润肺，利咽开音，润肠通便。"
+                },
+                {
+                    name: "海藻",
+                    property: "苦、咸，寒。归肝、胃、肾经。",
+                    effect: "消痰软坚散结，利水消肿。"
+                },
+                {
+                    name: "瓦楞子",
+                    property: "咸，平。归肺、胃、肝经。",
+                    effect: "消痰化瘀，软坚散结，制酸止痛。"
+                },
+                {
+                    name: "礞石",
+                    property: "咸，平。归肺、肝经。",
+                    effect: "坠痰下气，平肝镇惊。"
+                },
+                {
+                    name: "苦杏仁",
+                    property: "苦，微温；有小毒。归肺、大肠经。",
+                    effect: "降气止咳平喘，润肠通便。"
+                },
+                {
+                    name: "紫苏子",
+                    property: "辛，温。归肺、大肠经。",
+                    effect: "降气化痰，止咳平喘，润肠通便。"
+                },
+                {
+                    name: "百部",
+                    property: "甘、苦，微温。归肺经。",
+                    effect: "润肺下气止咳，杀虫灭虱。"
+                },
+                {
+                    name: "紫菀",
+                    property: "辛、苦，温。归肺经。",
+                    effect: "润肺下气，消痰止咳。"
+                },
+                {
+                    name: "款冬花",
+                    property: "辛、微苦，温。归肺经。",
+                    effect: "润肺下气，止咳化痰。"
+                },
+                {
+                    name: "马兜铃",
+                    property: "苦，微寒。归肺、大肠经。",
+                    effect: "清肺降气，止咳平喘，清肠消痔。"
+                },
+                {
+                    name: "枇杷叶",
+                    property: "苦，微寒。归肺、胃经。",
+                    effect: "清肺止咳，降逆止呕。"
+                },
+                {
+                    name: "桑白皮",
+                    property: "甘，寒。归肺经。",
+                    effect: "泻肺平喘，利水消肿。"
+                },
+                {
+                    name: "葶苈子",
+                    property: "辛、苦，大寒。归肺、膀胱经。",
+                    effect: "泻肺平喘，行水消肿。"
+                },
+                {
+                    name: "白果",
+                    property: "甘、苦、涩，平；有毒。归肺、肾经。",
+                    effect: "敛肺定喘，止带缩尿。"
+                },
+                {
+                    name: "矮地茶",
+                    property: "辛、微苦，平。归肺、肝经。",
+                    effect: "化痰止咳，清利湿热，活血化瘀。"
+                },
+                {
+                    name: "朱砂",
+                    property: "甘，微寒；有毒。归心经。",
+                    effect: "清心镇惊，安神，明目，解毒。"
+                },
+                {
+                    name: "磁石",
+                    property: "咸，寒。归肝、心、肾经。",
+                    effect: "镇惊安神，平肝潜阳，聪耳明目，纳气平喘。"
+                },
+                {
+                    name: "龙骨",
+                    property: "甘、涩，平。归心、肝、肾经。",
+                    effect: "镇惊安神，平肝潜阳，收敛固涩。"
+                },
+                {
+                    name: "琥珀",
+                    property: "甘，平。归心、肝、膀胱经。",
+                    effect: "镇惊安神，活血散瘀，利尿通淋。"
+                },
+                {
+                    name: "酸枣仁",
+                    property: "甘、酸，平。归肝、胆、心经。",
+                    effect: "养心补肝，宁心安神，敛汗，生津。"
+                },
+                {
+                    name: "柏子仁",
+                    property: "甘，平。归心、肾、大肠经。",
+                    effect: "养心安神，润肠通便，止汗。"
+                },
+                {
+                    name: "首乌藤",
+                    property: "甘，平。归心、肝经。",
+                    effect: "养血安神，祛风通络。"
+                },
+                {
+                    name: "合欢皮",
+                    property: "甘，平。归心、肝、肺经。",
+                    effect: "解郁安神，活血消肿。"
+                },
+                {
+                    name: "远志",
+                    property: "苦、辛，温。归心、肾、肺经。",
+                    effect: "安神益智，交通心肾，祛痰，消肿。"
+                },
+                {
+                    name: "石决明",
+                    property: "咸、寒。归肝经。",
+                    effect: "平肝潜阳，清肝明目。"
+                },
+                {
+                    name: "珍珠母",
+                    property: "咸、寒。归肝、心经。",
+                    effect: "平肝潜阳，安神定惊，明目退翳。"
+                },
+                {
+                    name: "牡蛎",
+                    property: "咸、微寒。归肝、胆、肾经。",
+                    effect: "潜阳补阴，重镇安神，软坚散结，收敛固涩，制酸止痛。"
+                },
+                {
+                    name: "赭石",
+                    property: "苦，寒。归肝、心、肺、胃经。",
+                    effect: "平肝潜阳，重镇降逆，凉血止血。"
+                },
+                {
+                    name: "蒺藜",
+                    property: "辛、苦，微温；有小毒。归肝经。",
+                    effect: "平肝解郁，活血祛风，明目，止痒。"
+                },
+                {
+                    name: "羚羊角",
+                    property: "咸，寒。归肝、心经。",
+                    effect: "平肝息风，清肝明目，清热解毒。"
+                },
+                {
+                    name: "牛黄",
+                    property: "甘，凉。归心、肝经。",
+                    effect: "凉肝息风，清心豁痰，开窍醒神，清热解毒。"
+                },
+                {
+                    name: "钩藤",
+                    property: "甘，凉。归肝、心包经。",
+                    effect: "息风定惊，清热平肝。"
+                },
+                {
+                    name: "天麻",
+                    property: "甘，平。归肝经。",
+                    effect: "息风止痉，平抑肝阳，祛风通络。"
+                },
+                {
+                    name: "地龙",
+                    property: "咸，寒。归肝、肺、脾、膀胱经。",
+                    effect: "清热定惊，通络，平喘，利尿。"
+                },
+                {
+                    name: "全蝎",
+                    property: "辛，平；有毒。归肝经。",
+                    effect: "息风镇痉，通络止痛，攻毒散结。"
+                },
+                {
+                    name: "蜈蚣",
+                    property: "辛，温；有毒。归肝经。",
+                    effect: "息风镇痉，通络止痛，攻毒散结。"
+                },
+                {
+                    name: "僵蚕",
+                    property: "咸、辛，平。归肝、肺、胃经。",
+                    effect: "息风止痉，祛风止痛，化痰散结。"
+                },
+                {
+                    name: "麝香",
+                    property: "辛，温。归心、脾经。",
+                    effect: "开窍醒神，活血通经，消肿止痛。"
+                },
+                {
+                    name: "冰片",
+                    property: "辛、苦，微寒。归心、脾，肺经。",
+                    effect: "开窍醒神，清热止痛。"
+                },
+                {
+                    name: "苏合香",
+                    property: "辛，温。归心、脾经。",
+                    effect: "开窍，辟秽，止痛。"
+                },
+                {
+                    name: "石菖蒲",
+                    property: "辛、苦，温。归心、胃经。",
+                    effect: "开窍豁痰，醒神益智，化湿开胃。"
+                },
+                {
+                    name: "人参",
+                    property: "甘、微苦，微温。归脾、肺、心、肾经。",
+                    effect: "大补元气，复脉固脱，补脾益肺，生津养血，安神益智。"
+                },
+                {
+                    name: "西洋参",
+                    property: "甘、微苦，凉。归心、肺、肾经。",
+                    effect: "补气养阴，清热生津。"
+                },
+                {
+                    name: "党参",
+                    property: "甘，平。归脾、肺经。",
+                    effect: "补脾益肺，养血生津。"
+                },
+                {
+                    name: "太子参",
+                    property: "甘、微苦，平。归脾、肺经。",
+                    effect: "益气健脾，生津润肺。"
+                },
+                {
+                    name: "黄芪",
+                    property: "甘，微温。归脾、肺经。",
+                    effect: "补气升阳，固表止汗，利水消肿，生津养血，行滞通痹，托毒排脓，敛疮生肌。"
+                },
+                {
+                    name: "白术",
+                    property: "甘、苦，温。归脾、胃经。",
+                    effect: "健脾益气，燥湿利水，止汗，安胎。"
+                },
+                {
+                    name: "山药",
+                    property: "甘，平。归脾、肺、肾经。",
+                    effect: "补脾养胃，生津益肺，补肾涩精。"
+                },
+                {
+                    name: "白扁豆",
+                    property: "甘，微温。归脾、胃经。",
+                    effect: "健脾化湿，和中消暑。"
+                },
+                {
+                    name: "甘草",
+                    property: "甘，平。归心、肺、脾、胃经。",
+                    effect: "补脾益气，清热解毒，祛痰止咳，缓急止痛，调和诸药。"
+                },
+                {
+                    name: "大枣",
+                    property: "甘，温。归脾、胃、心经。",
+                    effect: "补中益气，养血安神。"
+                },
+                {
+                    name: "鹿茸",
+                    property: "甘、咸，温。归肾、肝经。",
+                    effect: "壮肾阳，益精血，强筋骨，调冲任，托疮毒。"
+                },
+                {
+                    name: "淫羊藿",
+                    property: "辛、甘，温。归肝、肾经。",
+                    effect: "补肾阳，强筋骨，祛风湿。"
+                },
+                {
+                    name: "巴戟天",
+                    property: "甘、辛，微温。归肾、肝经。",
+                    effect: "补肾阳，强筋骨，祛风湿。"
+                },
+                {
+                    name: "仙茅",
+                    property: "辛，热；有毒。归肾、肝、脾经。",
+                    effect: "补肾阳，强筋骨，祛寒湿。"
+                },
+                {
+                    name: "杜仲",
+                    property: "甘、温。归肝、肾经。",
+                    effect: "补肝肾，强筋骨，安胎。"
+                },
+                {
+                    name: "续断",
+                    property: "苦、辛，微温。归肝、肾经。",
+                    effect: "补肝肾，强筋骨，续折伤，止崩漏。"
+                },
+                {
+                    name: "肉苁蓉",
+                    property: "甘、咸，温。归肾、大肠经。",
+                    effect: "补肾阳，益精血，润肠通便。"
+                },
+                {
+                    name: "锁阳",
+                    property: "甘，温。归肝、肾、大肠经。",
+                    effect: "补肾阳，益精血，润肠通便。"
+                },
+                {
+                    name: "补骨脂",
+                    property: "辛、苦，温。归肾、脾经。",
+                    effect: "温肾助阳，纳气平喘，温脾止泻；外用消风祛斑。"
+                },
+                {
+                    name: "益智",
+                    property: "辛，温。归肾、脾经。",
+                    effect: "暖肾固精缩尿，温脾止泻摄唾。"
+                },
+                {
+                    name: "菟丝子",
+                    property: "辛、甘，平。归肝、肾、脾经。",
+                    effect: "补益肝肾，固精缩尿，安胎，明目，止泻；外用消风祛斑。"
+                },
+                {
+                    name: "沙苑子",
+                    property: "甘，温。归肝、肾经。",
+                    effect: "补肾助阳，固精缩尿，养肝明目。"
+                },
+                {
+                    name: "蛤蚧",
+                    property: "咸，平。归肺、肾经。",
+                    effect: "补肺益肾，纳气定喘，助阳益精。"
+                },
+                {
+                    name: "核桃仁",
+                    property: "甘，温。归肾、肺、大肠经。",
+                    effect: "补肾，温肺，润肠。"
+                },
+                {
+                    name: "冬虫夏草",
+                    property: "甘，平。归肺、肾经。",
+                    effect: "补肾益肺，止血化痰。"
+                },
+                {
+                    name: "紫河车",
+                    property: "甘、咸，温。归肺、肝、肾经。",
+                    effect: "温肾补精，益气养血。"
+                },
+                {
+                    name: "当归",
+                    property: "甘、辛，温。归肝、心、脾经。",
+                    effect: "补血活血，调经止痛，润肠通便。"
+                },
+                {
+                    name: "熟地黄",
+                    property: "甘，微温。归肝、肾经。",
+                    effect: "补血滋阴，益精填髓。"
+                },
+                {
+                    name: "何首乌",
+                    property: "苦、甘、涩，微温。归肝、心、肾经。",
+                    effect: "制何首乌：补肝肾，益精血，乌须发，强筋骨，化浊降脂。生何首乌：解毒，消痈，截疟，润肠通便。"
+                },
+                {
+                    name: "白芍",
+                    property: "苦、酸，微寒。归肝、脾经。",
+                    effect: "养血调经，敛阴止汗，柔肝止痛，平抑肝阳。"
+                },
+                {
+                    name: "阿胶",
+                    property: "甘，平。归肺、肝、肾经。",
+                    effect: "补血滋阴，润燥，止血。"
+                },
+                {
+                    name: "龙眼肉",
+                    property: "甘，温。归心、脾经。",
+                    effect: "补益心脾，养血安神。"
+                },
+                {
+                    name: "北沙参",
+                    property: "甘、微苦，微寒。归肺、胃经。",
+                    effect: "养阴清肺，益胃生津。"
+                },
+                {
+                    name: "百合",
+                    property: "甘，寒。归肺、心经。",
+                    effect: "养阴润肺，清心安神。"
+                },
+                {
+                    name: "麦冬",
+                    property: "甘、微苦，微寒。归肺、胃、心经。",
+                    effect: "养阴生津，润肺清心。"
+                },
+                {
+                    name: "天冬",
+                    property: "甘、苦、寒。归肺、胃、肾经。",
+                    effect: "养阴润燥，清肺生津。"
+                },
+                {
+                    name: "石斛",
+                    property: "甘，微寒。归胃、肾经。",
+                    effect: "益胃生津，滋阴清热。"
+                },
+                {
+                    name: "玉竹",
+                    property: "甘，微寒。归肺、胃经。",
+                    effect: "养阴润肺，生津止渴。"
+                },
+                {
+                    name: "黄精",
+                    property: "甘，平。归脾、肺、肾经。",
+                    effect: "补气养阴，润肺，健脾，益肾。"
+                },
+                {
+                    name: "枸杞子",
+                    property: "甘，平。归肝、肾经。",
+                    effect: "滋补肝肾，益精明目。"
+                },
+                {
+                    name: "墨旱莲",
+                    property: "甘、酸，寒。归肝、肾经。",
+                    effect: "滋补肝肾，凉血止血。"
+                },
+                {
+                    name: "女贞子",
+                    property: "甘、苦、凉。归肝、肾经。",
+                    effect: "滋补肝肾，明目乌发。"
+                },
+                {
+                    name: "桑椹",
+                    property: "甘、酸，寒。归心、肝、肾经。",
+                    effect: "滋阴补血，生津润燥。"
+                },
+                {
+                    name: "龟甲",
+                    property: "咸、甘，微寒。归肝、肾、心经。",
+                    effect: "滋阴潜阳，益肾强骨，养血补心，固经止崩。"
+                },
+                {
+                    name: "鳖甲",
+                    property: "咸，微寒。归肝、肾经。",
+                    effect: "滋阴潜阳，退热除蒸，软坚散结。"
+                },
+                {
+                    name: "麻黄根",
+                    property: "甘、涩，平。归心、肺经。",
+                    effect: "固表止汗。"
+                },
+                {
+                    name: "浮小麦",
+                    property: "甘，咸，凉。归心经。",
+                    effect: "益气，止汗，除热。"
+                },
+                {
+                    name: "五味子",
+                    property: "酸、甘，温。归肺、心、肾经。",
+                    effect: "收敛固涩，益气生津，补肾宁心。"
+                },
+                {
+                    name: "乌梅",
+                    property: "酸、涩，平。归肝、脾、肺、大肠经。",
+                    effect: "敛肺，涩肠，生津，安蛔。"
+                },
+                {
+                    name: "罂粟壳",
+                    property: "酸、涩，平；有毒。归肺、大肠、肾经。",
+                    effect: "敛肺，涩肠，止痛。"
+                },
+                {
+                    name: "诃子",
+                    property: "苦、酸、涩，平。归肺、大肠经。",
+                    effect: "涩肠止泻，敛肺止咳，降火利咽。"
+                },
+                {
+                    name: "肉豆蔻",
+                    property: "辛，温。归脾、胃、大肠经。",
+                    effect: "涩肠止泻，温中行气。"
+                },
+                {
+                    name: "赤石脂",
+                    property: "甘、酸、涩，温。归大肠、胃经。",
+                    effect: "涩肠，止血，生肌敛疮。"
+                },
+                {
+                    name: "山茱萸",
+                    property: "酸、涩，微温。归肝、肾经。",
+                    effect: "补益肝肾，收涩固脱。"
+                },
+                {
+                    name: "覆盆子",
+                    property: "甘、酸，微温。归肝、肾、膀胱经。",
+                    effect: "益肾固精缩尿，养肝明目。"
+                },
+                {
+                    name: "桑螵蛸",
+                    property: "甘、咸，平。归肝、肾经。",
+                    effect: "固精缩尿，补肾助阳。"
+                },
+                {
+                    name: "金樱子",
+                    property: "酸、甘、涩，平。归肾、膀胱、大肠经。",
+                    effect: "固精缩尿，固崩止带，涩肠止泻。"
+                },
+                {
+                    name: "海螵蛸",
+                    property: "咸、涩，温。归脾、肾经。",
+                    effect: "收敛止血，固精止带，制酸止痛，收湿敛疮。"
+                },
+                {
+                    name: "莲子",
+                    property: "甘、涩，平。归脾、肾、心经。",
+                    effect: "补脾止泻，止带，益肾涩精，养心安神。"
+                },
+                {
+                    name: "芡实",
+                    property: "甘、涩，平。归脾、肾经。",
+                    effect: "益肾固精，补脾止泻，除湿止带。"
+                },
+                {
+                    name: "常山",
+                    property: "苦、辛，寒；有毒。归肺、肝、心经。",
+                    effect: "涌吐痰涎，截疟。"
+                },
+                {
+                    name: "甜瓜蒂",
+                    property: "苦，寒；有毒。归心、胃、胆经。",
+                    effect: "涌吐痰食，祛湿退黄。"
+                },
+                {
+                    name: "硫黄",
+                    property: "酸，温；有毒。归肾、大肠经。",
+                    effect: "外用解毒杀虫疗疮，内服补火助阳通便。"
+                },
+                {
+                    name: "雄黄",
+                    property: "辛，温；有毒。归肝、大肠经。",
+                    effect: "解毒杀虫，燥湿祛痰，截疟。"
+                },
+                {
+                    name: "白矾",
+                    property: "酸、涩，寒。归肺、脾、肝、大肠。",
+                    effect: "外用解毒杀虫，燥湿止痒；内服止血止泻，祛除风痰。"
+                },
+                {
+                    name: "蛇床子",
+                    property: "辛、苦，温；有小毒。归肾经。",
+                    effect: "燥湿祛风，杀虫止痒，温肾壮阳。"
+                },
+                {
+                    name: "蜂房",
+                    property: "甘，平。归胃经。",
+                    effect: "攻毒杀虫，祛风止痛。"
+                },
+                {
+                    name: "蟾酥",
+                    property: "辛，温；有毒。归心经。",
+                    effect: "解毒，止痛，开窍醒神。"
+                },
+                {
+                    name: "红粉",
+                    property: "辛，热；有大毒。归肺、脾经。",
+                    effect: "拔毒，除脓，去腐，生肌。"
+                },
+                {
+                    name: "轻粉",
+                    property: "辛，寒；有毒。归大肠、小肠经。",
+                    effect: "外用杀虫，攻毒，敛疮；内服祛痰消积，逐水通便。"
+                },
+                {
+                    name: "炉甘石",
+                    property: "甘，平。归肝、脾经。",
+                    effect: "解毒明目退翳，收湿止痒敛疮。"
+                },
+                {
+                    name: "硼砂",
+                    property: "甘、咸，凉。归肺、胃经。",
+                    effect: "清热解毒，清肺化痰。"
+                }
+            ];
+            
+            // 限制显示的中药数量以适应小屏幕
+            const MAX_HERBS_MOBILE = 8;
+            
+            const gameContainer = document.querySelector('.game-container');
+            const herbsContainer = document.querySelector('.herbs-container');
+            const effectsContainer = document.querySelector('.effects-container');
+            const canvas = document.getElementById('connectionCanvas');
+            const ctx = canvas.getContext('2d');
+            const scoreElement = document.getElementById('score');
+            const totalElement = document.getElementById('total');
+            const feedbackElement = document.getElementById('feedback');
+            const resetBtn = document.getElementById('resetBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            
+            let selectedHerb = null;
+            let selectedEffect = null;
+            let connections = [];
+            let score = 0;
+            let totalQuestions = 0;
+            let currentHerbs = [];
+
+            // 初始化游戏
+            function initGame() {
+                // 清空容器
+                herbsContainer.innerHTML = '';
+                effectsContainer.innerHTML = '';
+                connections = [];
+                score = 0;
+                selectedHerb = null;
+                selectedEffect = null;
+                scoreElement.textContent = score;
+                feedbackElement.textContent = '';
+                feedbackElement.className = 'feedback';
+                
+                // 根据屏幕大小调整问题数量
+                const isMobile = window.innerWidth <= 768;
+                const maxQuestions = isMobile ? Math.min(6, MAX_HERBS_MOBILE) : 10;
+                const numQuestions = Math.floor(Math.random() * 3) + (isMobile ? 3 : 5); // 移动端3-5个，桌面端5-7个
+                totalQuestions = Math.min(numQuestions, maxQuestions);
+                totalElement.textContent = totalQuestions;
+                
+                // 复制并打乱中药数据
+                const shuffledHerbs = [...herbsData].sort(() => Math.random() - 0.5).slice(0, totalQuestions);
+                currentHerbs = shuffledHerbs;
+                
+                // 复制并打乱功效数据
+                const shuffledEffects = shuffledHerbs.map(h => ({
+                    effect: h.effect,
+                    property: h.property
+                })).sort(() => Math.random() - 0.5);
+                
+                // 添加中药选项
+                shuffledHerbs.forEach(herb => {
+                    const herbElement = document.createElement('div');
+                    herbElement.className = 'herb';
+                    herbElement.innerHTML = `<b>${herb.name}</b>`;
+                    herbElement.dataset.name = herb.name;
+                    herbElement.addEventListener('click', selectHerb);
+                    herbsContainer.appendChild(herbElement);
+                });
+                
+                // 添加功效选项
+                shuffledEffects.forEach(effect => {
+                    const effectElement = document.createElement('div');
+                    effectElement.className = 'effect';
+                    
+                    // 移动端简化显示
+                    const isMobile = window.innerWidth <= 768;
+                    const displayText = isMobile ? 
+                        `<b>${effect.effect.substring(0, 20)}${effect.effect.length > 20 ? '...' : ''}</b>` : 
+                        `<b>${effect.effect}</b><div class="effect-property">${effect.property}</div>`;
+                    
+                    effectElement.innerHTML = displayText;
+                    effectElement.dataset.effect = effect.effect;
+                    effectElement.title = effect.effect; // 添加完整文本提示
+                    effectElement.addEventListener('click', selectEffect);
+                    effectsContainer.appendChild(effectElement);
+                });
+                
+                // 调整Canvas大小
+                resizeCanvas();
+                
+                // 初始绘制
+                drawConnections();
+            }
+            
+            // 调整Canvas大小
+            function resizeCanvas() {
+                canvas.width = gameContainer.offsetWidth;
+                canvas.height = gameContainer.offsetHeight;
+            }
+            
+            // 选择中药
+            function selectHerb(e) {
+                document.querySelectorAll('.herb.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                selectedHerb = e.currentTarget;
+                selectedHerb.classList.add('selected');
+                if (selectedEffect) {
+                    connectHerbAndEffect();
+                }
+            }
+
+            // 选择功效
+            function selectEffect(e) {
+                document.querySelectorAll('.effect.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                selectedEffect = e.currentTarget;
+                selectedEffect.classList.add('selected');
+                if (selectedHerb) {
+                    connectHerbAndEffect();
+                }
+            }
+
+            // 连接中药和功效
+            function connectHerbAndEffect() {
+                connections = connections.filter(conn => 
+                    conn.herb !== selectedHerb && conn.effect !== selectedEffect
+                );
+                connections.push({
+                    herb: selectedHerb,
+                    effect: selectedEffect
+                });
+                selectedHerb.classList.remove('selected');
+                selectedEffect.classList.remove('selected');
+                selectedHerb = null;
+                selectedEffect = null;
+                drawConnections();
+            }
+            
+            // 绘制所有连线
+            function drawConnections() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                connections.forEach(conn => {
+                    const herbRect = conn.herb.getBoundingClientRect();
+                    const effectRect = conn.effect.getBoundingClientRect();
+                    const containerRect = gameContainer.getBoundingClientRect();
+                    
+                    const startX = herbRect.right - containerRect.left;
+                    const startY = herbRect.top + herbRect.height / 2 - containerRect.top;
+                    const endX = effectRect.left - containerRect.left;
+                    const endY = effectRect.top + effectRect.height / 2 - containerRect.top;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#3498db';
+                    ctx.stroke();
+                });
+            }
+            
+            // 检查答案
+            function checkAnswers() {
+                let correctCount = 0;
+                connections.forEach(conn => {
+                    const herbName = conn.herb.dataset.name;
+                    const effectText = conn.effect.dataset.effect;
+                    const herbData = currentHerbs.find(h => h.name === herbName);
+                    if (herbData && herbData.effect === effectText) {
+                        conn.herb.classList.add('correct');
+                        conn.effect.classList.add('correct');
+                        correctCount++;
+                    } else {
+                        conn.herb.classList.remove('correct');
+                        conn.effect.classList.remove('correct');
+                    }
+                });
+                score = correctCount;
+                scoreElement.textContent = score;
+                if (score === totalQuestions) {
+                    feedbackElement.textContent = "恭喜！所有匹配都正确！";
+                    feedbackElement.className = 'feedback success';
+                } else {
+                    feedbackElement.textContent = `完成了 ${score} / ${totalQuestions} 个正确匹配。请继续努力！`;
+                    feedbackElement.className = 'feedback';
+                }
+            }
+            
+            // 重置游戏
+            resetBtn.addEventListener('click', initGame);
+            checkBtn.addEventListener('click', checkAnswers);
+            
+            // 窗口调整大小时重绘Canvas
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+                drawConnections();
+            });
+            
+            // 初始化游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>
